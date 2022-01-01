@@ -17,6 +17,12 @@ options:
 ted: ${OBJ}
 	${CC} -o $@ ${OBJ} ${LDFLAGS}
 
+install:
+	install ted /usr/local/bin/
+
+uninstall:
+	rm /usr/local/bin/ted
+
 clean:
 	rm ${OBJ} ted
 
