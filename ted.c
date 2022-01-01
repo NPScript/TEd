@@ -69,6 +69,8 @@ void append_at_end();
 void delete_character();
 void delete();
 void z_combo();
+void open_line_after();
+void open_line_before();
 
 void normal();
 void insert();
@@ -108,6 +110,8 @@ void (*key_cmd[256])(void) = {
 	['A'] = append_at_end,
 	['d'] = delete,
 	['x'] = delete_character,
+	['o'] = open_line_after,
+	['O'] = open_line_before,
 	[':'] = set_command,
 	['Z'] = z_combo,
 };
@@ -267,6 +271,16 @@ void z_combo() {
 							quit();
 							break;
 	}
+}
+
+void open_line_after() {
+	insert_line_at_position(++cursor.line, L"", BUFINC);
+	cursor.column = 0;
+}
+
+void open_line_before() {
+	insert_line_at_position(cursor.line, L"", BUFINC);
+	cursor.column = 0;
 }
 
 void update_window_sizes() {
@@ -438,7 +452,7 @@ void insert() {
 		}
 	} else if (c == '\n') {
 		check_number_of_lines(get_num_lines() + 1);
-		insert_line_at_position(cursor.line, line->content + cursor.column, line->nwchar_t);
+		insert_line_at_position(cursor.line + 1, line->content + cursor.column, line->nwchar_t);
 		file.line[cursor.line].content[cursor.column] = 0;
 		++cursor.line;
 		cursor.column = 0;
@@ -459,13 +473,13 @@ void remove_line_at_position(unsigned index) {
 }
 
 void insert_line_at_position(unsigned index, const wchar_t * content, unsigned size) {
-	for (int i = get_num_lines(); i > index; --i) {
+	for (int i = get_num_lines(); i + 1 > index; --i) {
 		file.line[i] = file.line[i - 1];
 	}
-	file.line[index + 1].content = malloc(sizeof(wchar_t) * size);
-	check_line_length(&file.line[index + 1], size);
-	wmemset(file.line[index + 1].content, 0, file.line[index + 1].nwchar_t);
-	wcsncpy(file.line[index + 1].content, content, size);
+	file.line[index].content = malloc(sizeof(wchar_t) * size);
+	check_line_length(&file.line[index], size);
+	wmemset(file.line[index].content, 0, file.line[index].nwchar_t);
+	wcsncpy(file.line[index].content, content, size);
 }
 
 void insert_wchar_at_position(Line * line, unsigned index, wchar_t c) {
