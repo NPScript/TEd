@@ -17,8 +17,17 @@ j - move down
 k - move up
 dd - delete line
 x - delete character
-w - write file (not like in vi)
-q - quit (not like in vi)
+ZZ - write file and close
+ZQ - quit
+: - open command mode
+```
+
+Available commands in command mode:
+
+```
+w - write
+q - quit
+wq - write and quit
 ```
 
 In further versions of TEd it will be more compatible with vi and the commands
