@@ -1,0 +1,6 @@
+#define TABSIZ 2
+#define RETURN_SIGN RGB("¬", 100, 100, 100)
+#define TAB_SIGN RGB(">", 100, 100, 100)
+
+#define ACTIVE_LINE_NUMBER_COL {100, 100, 100}
+#define LINE_NUMBER_COL {180, 180, 180}

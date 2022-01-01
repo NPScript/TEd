@@ -62,28 +62,37 @@ void goto_call();
 void write();
 void quit();
 void set_insert();
+void set_command();
 void append();
 void insert_at_start();
 void append_at_end();
 void delete_character();
 void delete();
+void z_combo();
 
 void normal();
 void insert();
+void command();
+
+const int active_line_number_color[3] = ACTIVE_LINE_NUMBER_COL;
+const int line_number_color[3] = LINE_NUMBER_COL;
 
 enum MODES {
 	NORMAL,
-	INSERT
+	INSERT,
+	COMMAND
 };
 
-const wchar_t * mode_desc[2] = {
+const wchar_t * mode_desc[] = {
 	L"Normal",
-	L"Insert"
+	L"Insert",
+	L"COMMAND"
 };
 
-void (*mode[3])(void) = {
+void (*mode[])(void) = {
 	[NORMAL] = normal,
 	[INSERT] = insert,
+	[COMMAND] = command,
 };
 
 void (*key_cmd[256])(void) = {
@@ -99,8 +108,8 @@ void (*key_cmd[256])(void) = {
 	['A'] = append_at_end,
 	['d'] = delete,
 	['x'] = delete_character,
-	['w'] = write,
-	['q'] = quit
+	[':'] = set_command,
+	['Z'] = z_combo,
 };
 
 struct Cursor {
@@ -187,8 +196,13 @@ void write() {
 void draw_file_to_window(Window * win, Window * numwin) {
 	int y = -scroll;
 	for (int i = 0; i < file.nline && file.line[i].content && y < (int)main_window.height; ++i) {
-		printfxy_to_window(win, 0, y, L"%ls¬", file.line[i].content);
-		printfxy_to_window(numwin, 0, y + 1 + win->has_borders, cursor.line == i ? L"> %d" : L"%d", i + 1);
+		printfxy_to_window(win, 0, y, L"%ls" RETURN_SIGN, file.line[i].content);
+
+		const int * color = (cursor.line == i ? line_number_color : active_line_number_color);
+		SET_COLOR(color[0], color[1], color[2]);
+		printfxy_to_window(numwin, 0, y + 1 + win->has_borders, L"%d", i + 1);
+		RESET_COLOR();
+
 		y += visual_str_len(file.line[i].content, file.line[i].nwchar_t) / win->width + 1;
 	}
 }
@@ -241,6 +255,18 @@ void delete() {
 void delete_character() {
 	remove_wchar_at_position(&file.line[cursor.line], cursor.column);
 	correct_cursor_column();
+}
+
+void z_combo() {
+	wchar_t c = getch();
+
+	switch(c) {
+		case 'Q': quit();
+							break;
+		case 'Z': write();
+							quit();
+							break;
+	}
 }
 
 void update_window_sizes() {
@@ -325,6 +351,10 @@ void set_insert() {
 	active_mode = INSERT;
 }
 
+void set_command() {
+	active_mode = COMMAND;
+}
+
 void append() {
 	active_mode = INSERT;
 	if (wcslen(file.line[cursor.line].content) > 0)
@@ -348,10 +378,45 @@ void normal() {
 		(*key_cmd[c])();
 		mulset = 0;
 		multiplicator = 1;
-	} else if(c > 47 && c < 58) {
+	} else if (c > 47 && c < 58) {
 		set_multiplicator(c);
 		mulset = 1;
 	}
+}
+
+void command() {
+	wchar_t buf[BUFSIZ] = {0};
+	int command_input = 1;
+
+	while (command_input) {
+		printfxy_to_window(&status_bar, 0, 0, L"-- COMMAND -- :%ls", buf);
+		wchar_t c = getch();
+
+		switch (c) {
+			case '\n':
+				command_input = 0;
+				
+				if (!wcscmp(buf, L"q")) {
+					quit();
+				} else if (!wcscmp(buf, L"wq")) {
+					write();
+					quit();
+				} else if (!wcscmp(buf, L"w")) {
+					write();
+				}
+
+				break;
+			case 127:
+				buf[wcslen(buf) - 1] = 0;
+			case 27:
+				command_input = 0;
+			default:
+				buf[wcslen(buf)] = c;
+				break;
+		}
+	}
+
+	active_mode = NORMAL;
 }
 
 void insert() {

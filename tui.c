@@ -182,7 +182,8 @@ void printfxy_to_window(Window * win, int x, int y, const wchar_t * fmt, ...) {
 
 	for (wchar_t * c = buf; *c;) {
 		if (*c == '\t') {
-			tabstop = TABSIZ - 1;
+			tabstop = TABSIZ;
+			wprintf(TAB_SIGN);
 			*c = ' ';
 		}
 
@@ -194,7 +195,7 @@ void printfxy_to_window(Window * win, int x, int y, const wchar_t * fmt, ...) {
 		}
 
 		if (*c != '\n') {
-			if (cy >= (int)(win->y + win->has_borders))
+			if (cy >= (int)(win->y + win->has_borders) && tabstop < TABSIZ - 1)
 				putwc(*c, stdout);
 			++cx;
 		}

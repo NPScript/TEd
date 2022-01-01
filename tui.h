@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <wchar.h>
 
-#define TABSIZ 2
 #define VLINE    L'│'
 #define HLINE    L'─'
 #define TLCORNER L'┌'
@@ -16,8 +15,8 @@
 #define BTEE     L'┴'
 #define TTEE     L'┬'
 #define PLUS     L'─'
-#define RGB(t, r, g, b) "\033[38;2;" #r ";" #g ";" #b "m" t "\033[0m"
-#define SET_COLOR(r, g, b) wprintf(L"\033[38;2;" #r ";" #g ";" #b "m")
+#define RGB(t, r, g, b) L"\033[38;2;" #r L";" #g L";" #b L"m" t "\033[0m"
+#define SET_COLOR(r, g, b) wprintf(L"\033[38;2;%d;%d;%dm", r, g, b)
 #define RESET_COLOR() wprintf(L"\033[0m")
 
 typedef struct {
@@ -50,5 +49,7 @@ void showcursor(int show);
 
 void set_cursor_position(int x, int y);
 void set_cursor_position_in_window(Window * win, int x, int y);
+
+#include "config.h"
 
 #endif
