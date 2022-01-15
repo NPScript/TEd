@@ -250,7 +250,13 @@ void delete() {
 	wchar_t c = getch();
 
 	switch(c) {
-		case 'd': remove_line_at_position(cursor.line);
+		case 'd':
+			if (get_num_lines() > 1) {
+				remove_line_at_position(cursor.line);
+			} else {
+				memset(file.line[0].content, 0, sizeof(wchar_t) * file.line[0].nwchar_t);
+			}
+			break;
 	}
 
 	correct_cursor();
