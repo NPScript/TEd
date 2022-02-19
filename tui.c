@@ -3,8 +3,11 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <termios.h>
+#include <malloc.h>
+#include <stdlib.h>
 
 #include "tui.h"
+#include "highlight.h"
 
 struct termios term;
 
@@ -163,7 +166,7 @@ void draw_window(Window * win) {
 
 void printfxy_to_window(Window * win, int x, int y, const wchar_t * fmt, ...) {
 	va_list list;
-	wchar_t buf[BUFSIZ];
+	wchar_t * buf = malloc(sizeof(wchar_t) * BUFSIZ);
 	int cx;
 	int cy;
 	int tabstop = 0;
@@ -181,20 +184,38 @@ void printfxy_to_window(Window * win, int x, int y, const wchar_t * fmt, ...) {
 	wprintf(L"\033[%d;%dH", cy, cx);
 
 	for (wchar_t * c = buf; *c;) {
-		if (*c == '\t') {
-			tabstop = TABSIZ;
-			wprintf(TAB_SIGN);
-			*c = ' ';
+		if (*c == L'\033') {
+			int running = 1;
+
+			while (running) {
+				if ((*c < L'0' || *c > L'9') && *c != L';') {
+					running = 0;
+				}
+
+				putwc(*c, stdout);
+				++c;
+			}
+			continue;
 		}
 
-		if (*c == '\n' || cx == win->x + win->width - win->has_borders) {
+		if (*c == L'\n') {
+			wprintf(RETURN_SIGN);
+		}
+
+		if (*c == L'\t') {
+			tabstop = TABSIZ;
+			wprintf(TAB_SIGN);
+			*c = L' ';
+		}
+
+		if (*c == L'\n' || cx == win->x + win->width - win->has_borders) {
 			if (++cy >= (int)(win->y + win->height - win->has_borders))
 				break;
 			cx = win->x + win->has_borders;
 			wprintf(L"\033[%d;%dH", cy, cx);
 		}
 
-		if (*c != '\n') {
+		if (*c != L'\n') {
 			if (cy >= (int)(win->y + win->has_borders) && tabstop < TABSIZ - 1)
 				putwc(*c, stdout);
 			++cx;
@@ -205,6 +226,8 @@ void printfxy_to_window(Window * win, int x, int y, const wchar_t * fmt, ...) {
 		else
 			++c;
 	}
+
+	free(buf);
 }
 
 void set_cursor_position(int x, int y) {

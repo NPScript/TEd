@@ -25,6 +25,8 @@ typedef struct {
 	unsigned x;
 	unsigned y;
 	unsigned has_borders;
+	unsigned syntax_highlighting;
+	char * language;
 } Window;
 
 unsigned get_term_width();

@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <locale.h>
 
+#include "highlight.h"
+
 #define BUFINC 128
 
 int logi10(int a) {
@@ -27,6 +29,7 @@ int visual_str_len(wchar_t * str, unsigned max_len) {
 typedef struct {
 	wchar_t * content;
 	unsigned nwchar_t;
+	wchar_t * colored;
 } Line;
 
 struct File {
@@ -168,6 +171,7 @@ void init_file() {
 			file.line[i].nwchar_t = wcslen(buf) + 1;
 			file.line[i].content = malloc(file.line[i].nwchar_t * sizeof(wchar_t));
 			wcsncpy(file.line[i].content, buf, file.line[i].nwchar_t);
+			file.line[i].colored = get_highlight_buffer(buf);
 			++i;
 		}
 
@@ -200,7 +204,7 @@ void write() {
 void draw_file_to_window(Window * win, Window * numwin) {
 	int y = -scroll;
 	for (int i = 0; i < file.nline && file.line[i].content && y < (int)main_window.height; ++i) {
-		printfxy_to_window(win, 0, y, L"%ls" RETURN_SIGN, file.line[i].content);
+		printfxy_to_window(win, 0, y, L"%ls\n", file.line[i].colored ? file.line[i].colored : file.line[i].content);
 
 		const int * color = (cursor.line == i ? line_number_color : active_line_number_color);
 		SET_COLOR(color[0], color[1], color[2]);
@@ -529,6 +533,10 @@ int main(int argc, char ** argv) {
 
 	cursor.line = 0;
 	cursor.column = 0;
+
+	main_window.syntax_highlighting = 1;
+	num_window.syntax_highlighting = 0;
+	status_bar.syntax_highlighting = 0;
 
 	while (running) {
 		update_window_sizes();
